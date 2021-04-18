@@ -13,7 +13,9 @@ type NodeInd = Int
 data Ln = Ln NodeInd NodeInd Int 
 
 
-type Edge = (NodeInd, NodeInd, Int)
+type Edge = (NodeInd, NodeInd, EdgeVal)
+
+data EdgeVal = EdgeVal { getR :: Int, getU :: Int} deriving (Eq, Show)
 
 reverseEdge :: Edge -> Edge
 reverseEdge (s,f,v) = (f,s,v) 
@@ -24,7 +26,7 @@ edgeFrom (s,f,v) = s
 edgeTo :: Edge -> NodeInd
 edgeTo (s,f,v) = f
 
-edgeVal :: Edge -> Int
+edgeVal :: Edge -> EdgeVal
 edgeVal (s,f,v) = v
 
 --readGraph :: NodeCount -> ResCount -> [Ln] -> Graph
@@ -33,7 +35,6 @@ edgeVal (s,f,v) = v
 kirh ::  NodeCount -> ResCount -> [Ln] -> Double
 kirh = undefined
 
-type Cycle = [Edge]
 
 
 findTree :: Graph g => g -> [Edge]
@@ -48,15 +49,14 @@ findTree g = helper [] where
                else helper (head e' : t)
   
 
-
-findContours :: Graph g => g -> [Cycle]
-findContours g = findC (edges g) where
-  findC [] = []
-  findC (e:es) = let
-                   c = findContoursWithEdge g e
-                   es' = es \\ concatMap (\i -> [i, reverseEdge i]) c
-                 in 
-                   c : findC es'
+findContours :: Graph g => g -> [[Edge]]
+findContours g = let
+                   t = findTree g
+                   rs = filter (\(s,f,_) -> f > s) $ edges g \\ edges t
+                   contourByEdge e = findContoursWithEdge (e:t) e
+                 in
+                   map contourByEdge rs
+                   
 
                               
 containsUnorient :: Edge -> [Edge] -> Bool
@@ -77,7 +77,10 @@ findContoursWithEdgePath g c f p | c == f = [reverse p]
                                                    n@(_, c', _) <- ns
                                                    let p' = n : p
                                                    findContoursWithEdgePath g c' f p'
-                                                   
+                              
+--containsUnorient :: Edge -> [Edge] -> Bool
+--containsUnorient e es = (e `elem` es) || (reverseEdge e `elem` es) 
+
                                                    
                                                    
 {-
@@ -87,14 +90,16 @@ findContoursWithEdgePath g c f p | c == f = [reverse p]
    4    3    6             
 -}      
 g1 :: [Edge]
-g1 = [
- (1,2,0),
- (1,4,0),
- (2,3,0),
- (2,5,0),
- (3,4,0),
- (3,6,0),
- (5,6,0)]
+g1 = map (\(s,f) -> (s,f,EdgeVal 0 0)) 
+    [
+     (1,2),
+     (1,4),
+     (2,3),
+     (2,5),
+     (3,4),
+     (3,6),
+     (5,6)
+    ]
         
         
 class Graph g where
@@ -115,7 +120,7 @@ class Graph g where
   edgesTo :: g -> NodeInd -> [Edge]
   edgesTo g n = filter ((== n) . edgeTo) . edges $ g
   
-  getEdgeVal :: g -> (NodeInd, NodeInd) -> Maybe Int
+  getEdgeVal :: g -> (NodeInd, NodeInd) -> Maybe EdgeVal
   getEdgeVal g (s, f) = fmap edgeVal . find (\(s', f', _) -> s == s' && f == f') . edges $ g
   
   
