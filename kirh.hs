@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, TupleSections #-}
 
 module Kirh where
 
@@ -35,6 +35,16 @@ edgeVal (s,f,v) = v
 kirh ::  NodeCount -> ResCount -> [Ln] -> Double
 kirh = undefined
 
+
+buildNodeEquations :: Graph g => g -> [([(Edge, Int)], Int)]
+buildNodeEquations g = let
+                         ns = tail (nodes g)
+                         edgeSign (s, f, _) | s < f = 1
+                                            | otherwise = (-1)
+                         
+                         nodeEquation n = map (\e -> (e, edgeSign e)) (edgesFrom g n)
+                       in
+                         map ((,0) . nodeEquation) ns
 
 
 findTree :: Graph g => g -> [Edge]
