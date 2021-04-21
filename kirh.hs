@@ -128,8 +128,25 @@ findContoursWithEdgePath g c f p | c == f = [reverse p]
 
 
                                                    
-                                                   
-{-
+g2 :: EdgeListGraph EdgeVal
+g2 = mkEdgeListGraph 
+    [
+     (1, 2, EdgeVal 10 0), -- R1
+     (1, 3, EdgeVal 10 0), -- R3
+     (1, 4, EdgeVal 0 40), -- E3
+     (2, 3, EdgeVal 0 10), -- E1
+     (2, 4, EdgeVal 10 0), -- R2
+     (3, 4, EdgeVal 0 20)  -- E2
+    ]                                            
+{-                                 Answer:
+    __R1__2___R2__     R1=10        I12 = 1
+   |      +       |    R2=10        I24 = 3
+   |      E1      |    R3=10        I13 = 2
+   1__R3__|__+E2__|    E1=10       I23 = 2
+   |      3       4    E2=20       I34 = 0
+   |              |    E3=40       I14 =-3
+   |_____+E3______|
+
    1____2____5
    |    |    |
    |____|____|
