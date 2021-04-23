@@ -2,9 +2,10 @@
 
 module Kirh where
 
-import Data.List (nub, sort, find, (\\))
+import Data.List (nub, sort, find, findIndex, (\\))
 import Data.Maybe (isNothing)
 import Control.Monad (forM_)
+import Data.Maybe (fromJust)
 
 type NodeCount = Int
 type ResCount = Int
@@ -43,15 +44,43 @@ kirh = undefined
 
 type EqSys a = [([(Edge a, Int)],Int)]
 
+
 printSystem :: EqSys EdgeVal -> IO ()
 printSystem ss = forM_ ss $ \ (vs, b) -> do
                                           let v = map (\((s,f,_),k) -> ((s,f), k)) vs
                                           print (v, b)
 
+printMatrixView :: ([String], [([Int], Int)]) -> IO ()
+printMatrixView (lbls, lns) = let
+                              in
+                                do
+                                  forM_ (zip [1..] lbls) $ \(i, v) -> do
+                                    putStrLn $ show i ++ ": " ++ v
+                                  putStrLn ""
+                                  forM_ lns $ \ln -> print ln
+
+matrixFromEquations :: EqSys EdgeVal -> ([String], [([Int], Int)])
+matrixFromEquations eqs = (varNames, lns) where
+  printVar :: (NodeInd, NodeInd, EdgeVal) -> String
+  printVar (s,f,_) = "I" ++ show (s,f)
+  varNames = nub . map printVar . map fst . concatMap fst $ eqs
+  size = length varNames
+  varInd = fromJust . (\v -> findIndex (==v) varNames) . printVar
+  ln :: ([(Edge EdgeVal, Int)], Int) -> ([Int], Int)
+  ln (es, r) = let
+                 add (e, c) f = \i -> if varInd e == i - 1
+                                      then c
+                                      else f i 
+                 indVarMap = foldr add (const 0) es 
+               in
+                 (map indVarMap [1..size], r)
+  lns = map ln eqs
 
 
 buildSystem :: Graph g => g EdgeVal-> EqSys EdgeVal
 buildSystem g = buildContourEquations g ++ buildNodeEquations g
+
+
 
 
 buildContourEquations :: Graph g => g EdgeVal -> EqSys EdgeVal
@@ -59,7 +88,7 @@ buildContourEquations g = let
                             ccs = findContours g
                             edgePart e@(s, f, EdgeVal r u) = (e, r)
                             contourEquation = map edgePart
-                            contourU = sum . map (\e@(s, f, EdgeVal r u) -> u)
+                            contourU = (0-) . sum . map (\e@(s, f, EdgeVal r u) -> u)
                           in
                             map (\cs -> (map normalizeDir . contourEquation $ cs, contourU cs)) ccs
                            
@@ -142,7 +171,7 @@ g2 = mkEdgeListGraph
     __R1__2___R2__     R1=10        I12 = 1
    |      +       |    R2=10        I24 = 3
    |      E1      |    R3=10        I13 = 2
-   1__R3__|__+E2__|    E1=10       I23 = 2
+   1__R3__|__+E2__|    E1=10       I23 = -2
    |      3       4    E2=20       I34 = 0
    |              |    E3=40       I14 =-3
    |_____+E3______|
