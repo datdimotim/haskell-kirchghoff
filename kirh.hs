@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TupleSections, KindSignatures, DataKinds, ConstraintKinds #-}
+{-# LANGUAGE TupleSections #-}
 
 module Kirh where
 import Kramer (kramer)
