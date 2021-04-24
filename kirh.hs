@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances, TupleSections, KindSignatures, DataKinds, ConstraintKinds #-}
 
 module Kirh where
+import Kramer (kramer)
 
 import Data.List (nub, sort, find, findIndex, (\\))
 import Data.Maybe (isNothing)
@@ -44,20 +45,41 @@ kirh = undefined
 
 type EqSys a = [([(Edge a, Int)],Int)]
 
+solve :: Graph g => g EdgeVal-> ([String], [Rational])
+solve = (\(lbls, lns) -> (lbls, solveMatrix lns)). matrixFromEquations . buildSystem
 
 printSystem :: EqSys EdgeVal -> IO ()
 printSystem ss = forM_ ss $ \ (vs, b) -> do
                                           let v = map (\((s,f,_),k) -> ((s,f), k)) vs
                                           print (v, b)
 
+printVariables :: [String] -> IO ()
+printVariables lbls = forM_ (zip [1..] lbls) $ \(i, v) -> do
+                        putStrLn $ show i ++ ": " ++ v
+
 printMatrixView :: ([String], [([Int], Int)]) -> IO ()
 printMatrixView (lbls, lns) = let
                               in
                                 do
-                                  forM_ (zip [1..] lbls) $ \(i, v) -> do
-                                    putStrLn $ show i ++ ": " ++ v
+                                  printVariables lbls
                                   putStrLn ""
                                   forM_ lns $ \ln -> print ln
+
+printSolution :: ([String], [Rational]) -> IO ()
+printSolution (lbls, vs) = let
+                              ans = zip lbls vs
+                            in
+                              forM_ ans $ \(k,v) -> do
+                                putStrLn $ k ++ " = " ++ show v
+ 
+
+                               
+solveMatrix :: [([Int], Int)] -> [Rational]
+solveMatrix lns = let
+                    b = map snd lns
+                    m = map fst lns
+                  in
+                    kramer m b 
 
 matrixFromEquations :: EqSys EdgeVal -> ([String], [([Int], Int)])
 matrixFromEquations eqs = (varNames, lns) where
@@ -96,7 +118,7 @@ buildContourEquations g = let
 buildNodeEquations :: Graph g => g EdgeVal -> [([(Edge EdgeVal, Int)], Int)]
 buildNodeEquations g = let
                          ns = tail (nodes g)
-                         nodeEquation n = map (\e -> (e, edgeSign e)) (edgesFrom g n)
+                         nodeEquation n = map (, 1) (edgesFrom g n)
                          nodeEquationNormalizedVars = map normalizeDir . nodeEquation
                        in
                          map ((,0) . nodeEquationNormalizedVars) $ ns
@@ -176,23 +198,8 @@ g2 = mkEdgeListGraph
    |              |    E3=40       I14 =-3
    |_____+E3______|
 
-   1____2____5
-   |    |    |
-   |____|____|
-   4    3    6             
--}      
-g1 :: EdgeListGraph EdgeVal
-g1 = mkEdgeListGraph . map (\(s,f) -> (s,f,EdgeVal 13 0)) $ 
-    [
-     (1,2),
-     (1,4),
-     (2,3),
-     (2,5),
-     (3,4),
-     (3,6),
-     (5,6)
-    ]
         
+-}       
         
 class Graph g where
   nodeCount :: g a -> Int
