@@ -188,8 +188,34 @@ g2 = mkEdgeListGraph
      (2, 3, EdgeVal 0 10), -- E1
      (2, 4, EdgeVal 10 0), -- R2
      (3, 4, EdgeVal 0 20)  -- E2
-    ]                                            
-{-                                 Answer:
+    ]
+    
+g1 :: EdgeListGraph EdgeVal
+g1 = mkEdgeListGraph 
+    [
+     (1, 2, EdgeVal 0 (-110)), -- E1
+     (1, 3, EdgeVal 0 (-40)),  -- E2
+     (1, 4, EdgeVal 0 (-60)),  -- E3
+     (2, 5, EdgeVal 5 0),  -- R1
+     (3, 5, EdgeVal 10 0), -- R2
+     (4, 5, EdgeVal 2 0)   -- R3
+    ]                                                                           
+{-  
+    E1=110  R1=5    I12=I23=8
+    E2=40   R2=10   I13=I35=-3
+    E3=60   R3=2   I14=I45=-5
+
+     ___E1+__2__R1___
+    |                |  
+   1|___E2+__3__R2___|5
+    |                |
+    |___E3+__4__R3___|
+
+
+
+
+   g2:
+                                    Answer:
     __R1__2___R2__     R1=10        I12 = 1
    |      +       |    R2=10        I24 = 3
    |      E1      |    R3=10        I13 = 2
